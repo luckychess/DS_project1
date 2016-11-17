@@ -12,12 +12,12 @@ void server::startAccept()
     {
         if (!ec)
         {
-            std::cout << "Connection established" << std::endl;
+            std::cout << "Connection established for client " << _lastParticipant-1 << std::endl;
             startAccept();
         }
         else
         {
-            std::cout << "Error happenned: " << ec << std::endl;
+            std::cout << "Error happenned: client " << _lastParticipant-1 << ", code " << ec << std::endl;
         }
     });
 }
@@ -27,7 +27,6 @@ server::server(int port):
     _endpoint(ip::tcp::v4(), _port),
     _acceptor(_service, _endpoint),
     _lastParticipant(0)
-    //_socket(_service)
 {
 }
 
