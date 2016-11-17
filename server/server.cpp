@@ -63,7 +63,13 @@ void server::processCommand(std::string command)
             _participants.erase(id);
         }
     }
-    
+    else if (command == "/show")
+    {
+        for (int i = 0; i < _participants.size(); ++i)
+        {
+            std::cout << _participants.at(i).getId() << "  " << _participants.at(i).getName() << std::endl;
+        }
+    }
 }
 
 int main()
