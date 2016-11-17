@@ -22,6 +22,9 @@ private:
     ip::tcp::acceptor               _acceptor;
     std::map<int, participant>      _participants;
     int                             _lastParticipant;
+
+    void readCommands();
+    void processCommand(std::string command);
 };
 
 #endif // _SERVER_H_

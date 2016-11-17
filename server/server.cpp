@@ -1,5 +1,6 @@
 #include "server.h"
 #include <iostream>
+#include <thread>
 
 using namespace std::placeholders;
 
@@ -32,8 +33,37 @@ server::server(int port):
 
 void server::start()
 {
+    readCommands();
     startAccept();
     _service.run();
+}
+
+void server::readCommands()
+{
+    std::string command;
+    std::cin >> command;
+    while (command != "/quit")
+    {
+        processCommand(command);
+        std::cin >> command;
+    }
+}
+
+void server::processCommand(std::string command)
+{
+    std::cout << "command was " << command << std::endl;
+    if (command == "/kick")
+    {
+        std::cout << "enter user id to kick: " << std::endl;
+        int id = -1;
+        std::cin >> id;
+        if (_participants.count(id) > 0)
+        {
+            _participants.at(id).getSocket()->close();
+            _participants.erase(id);
+        }
+    }
+    
 }
 
 int main()

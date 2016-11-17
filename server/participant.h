@@ -12,7 +12,12 @@ class participant
 {
 public:
     participant(std::string name, socket_ptr socket, int id);
-    socket_ptr getSocket();
+    participant(const participant &other);
+    participant& operator=(const participant &other);
+
+    socket_ptr getSocket() const;
+    std::string getName() const;
+    int getId() const;
 private:
     socket_ptr        _socket;
     std::string       _name;
