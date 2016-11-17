@@ -33,9 +33,10 @@ server::server(int port):
 
 void server::start()
 {
-    readCommands();
+    std::thread t (&server::readCommands, this);
     startAccept();
     _service.run();
+    t.join();
 }
 
 void server::readCommands()
@@ -61,6 +62,10 @@ void server::processCommand(std::string command)
         {
             _participants.at(id).getSocket()->close();
             _participants.erase(id);
+        }
+        else
+        {
+            std::cout << "Client not found" << std::endl;
         }
     }
     else if (command == "/show")
