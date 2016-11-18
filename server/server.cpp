@@ -7,12 +7,13 @@ using namespace std::placeholders;
 void server::startAccept()
 {
     socket_ptr newSocket(new ip::tcp::socket(_service));
-    participant p("unknown", newSocket, _lastParticipant);
-    _participants.insert(std::pair<int, participant>(_lastParticipant++, p));
-    _acceptor.async_accept(*newSocket, [this](boost::system::error_code ec)
+    
+    _acceptor.async_accept(*newSocket, [this, newSocket](boost::system::error_code ec)
     {
         if (!ec)
         {
+            participant p("unknown", newSocket, _lastParticipant);
+            _participants.insert(std::pair<int, participant>(_lastParticipant++, p));
             std::cout << "Connection established for client " << _lastParticipant-1 << std::endl;
             startAccept();
         }
@@ -58,6 +59,7 @@ void server::processCommand(std::string command)
         std::cout << "enter user id to kick: " << std::endl;
         int id = -1;
         std::cin >> id;
+        std::cout << "id entered: " << id << std::endl;
         if (_participants.count(id) > 0)
         {
             _participants.at(id).getSocket()->close();
