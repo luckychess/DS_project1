@@ -18,6 +18,7 @@ public:
     socket_ptr getSocket() const;
     std::string getName() const;
     int getId() const;
+
 private:
     socket_ptr        _socket;
     std::string       _name;

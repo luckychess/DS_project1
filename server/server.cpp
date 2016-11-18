@@ -1,4 +1,5 @@
 #include "server.h"
+#include "../service/message.h"
 #include <iostream>
 #include <thread>
 
@@ -15,11 +16,12 @@ void server::startAccept()
             participant p("unknown", newSocket, _lastParticipant);
             _participants.insert(std::pair<int, participant>(_lastParticipant++, p));
             std::cout << "Connection established for client " << _lastParticipant-1 << std::endl;
+            read(p);
             startAccept();
         }
         else
         {
-            std::cout << "Error happenned: client " << _lastParticipant-1 << ", code " << ec << std::endl;
+            std::cout << "Error happened: client " << _lastParticipant-1 << ", code " << ec << std::endl;
         }
     });
 }
@@ -85,6 +87,35 @@ void server::processCommand(std::string command)
         }
         exit(0);
     }
+}
+
+void server::read(participant p)
+{
+    message newMessage;
+    async_read(*p.getSocket(), boost::asio::buffer(newMessage.getBody(), newMessage.getLen()), [this, newMessage, p](boost::system::error_code ec, std::size_t length)
+    {
+        if (!ec || ec == boost::asio::error::eof)
+        {
+            std::cout << "Client " << p.getId() << " sent ";
+            std::cout << newMessage.getBody() << std::endl;
+            for (int i = 0; i < _participants.size(); ++i)
+            {
+                if (i != p.getId())
+                {
+                    write(_participants.at(i), newMessage.getBody(), length);
+                }
+            }
+        }
+        else
+        {
+            std::cout << "Error happened while reading: client " << _lastParticipant-1 << ", code " << ec.message() << std::endl;
+        }
+    });
+}
+
+void server::write(participant p, const std::string data, int len)
+{
+    
 }
 
 int main()
