@@ -92,7 +92,7 @@ void server::processCommand(std::string command)
 void server::read(participant p)
 {
     message newMessage;
-    async_read(*p.getSocket(), boost::asio::buffer(newMessage.getBody(), newMessage.getLen()), [this, newMessage, p](boost::system::error_code ec, std::size_t length)
+    async_read(*p.getSocket(), buffer(newMessage.getBody(), newMessage.getLen()), [this, newMessage, p](boost::system::error_code ec, std::size_t length)
     {
         if (!ec || ec == boost::asio::error::eof)
         {
@@ -115,7 +115,13 @@ void server::read(participant p)
 
 void server::write(participant p, const std::string data, int len)
 {
-    
+    async_write(*p.getSocket(), buffer(data, len), [this, data, p](boost::system::error_code ec, std::size_t length)
+    {
+        if (!ec)
+        {
+            std::cout << "message was sent to client " << p.getId() << ": "<< data;
+        }
+    });
 }
 
 int main()
