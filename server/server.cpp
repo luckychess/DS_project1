@@ -100,9 +100,13 @@ void server::read(participant p)
             std::cout << newMessage.getBody() << std::endl;
             for (int i = 0; i < _participants.size(); ++i)
             {
+                std::string c;
+                c += std::to_string(p.getId());
+                c += " ";
+                c += newMessage.getBody();
                 if (i != p.getId())
                 {
-                    write(_participants.at(i), newMessage.getBody(), length);
+                    write(_participants.at(i), c.c_str(), length);
                 }
             }
         }
