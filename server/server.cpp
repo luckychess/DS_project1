@@ -44,7 +44,7 @@ void server::readCommands()
 {
     std::string command;
     std::cin >> command;
-    while (command != "/quit")
+    while (true)
     {
         processCommand(command);
         std::cin >> command;
@@ -76,6 +76,14 @@ void server::processCommand(std::string command)
         {
             std::cout << _participants.at(i).getId() << "  " << _participants.at(i).getName() << std::endl;
         }
+    }
+    else if (command == "/quit")
+    {
+        for (int i = 0; i < _participants.size(); ++i)
+        {
+            _participants.at(i).getSocket()->close();
+        }
+        exit(0);
     }
 }
 
