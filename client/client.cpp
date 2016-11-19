@@ -55,7 +55,7 @@ void client::read()
 
 void client::write(const std::string data, int len)
 {
-    std::cout << "Sending message: " << data << std::endl;
+    std::cout << "Sending message: " << data << ", " << len << " bytes" << std::endl;
     async_write(*_socket, buffer(data, len), [this, data](boost::system::error_code ec, std::size_t length)
     {
         if (!ec)
