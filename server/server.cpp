@@ -21,7 +21,7 @@ void server::startAccept()
         }
         else
         {
-            std::cout << "Error happened: client " << _lastParticipant-1 << ", code " << ec << std::endl;
+            std::cout << "Error happened: client " << _lastParticipant << ", code " << ec << std::endl;
         }
     });
 }
@@ -112,7 +112,7 @@ void server::read(participant p)
         }
         else
         {
-            std::cout << "Error happened while reading: client " << _lastParticipant-1 << ", code " << ec.message() << std::endl;
+            std::cout << "Error happened while reading: client " << p.getId() << ", code " << ec.message() << std::endl;
         }
     });
 }
