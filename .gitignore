@@ -1,5 +1,10 @@
 *.out
 *.o
+
+client/client
+server/server
+service/lib*
+
 CMakeCache.txt
 CMakeFiles
 CMakeScripts
