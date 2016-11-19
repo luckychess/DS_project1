@@ -1,36 +1,30 @@
 #include "client.h"
 #include "../service/message.h"
 #include <iostream>
-//#include <thread>
+#include <sstream>
+#include <thread>
 
 client::client(char *ip, char *port)
 {
     _serverIP = ip;
-    // std::stringstream portValue;
-    // portValue << port;
-    // portValue >> _port;
-    _port = port;
+    std::stringstream portValue;
+    portValue << port;
+    portValue >> _port;
     start();
 }
 
 void client::start()
 {
-    //_endpoint = ip::tcp::endpoint(ip::address::from_string(_serverIP), _port);
-    //ip::tcp::resolver::iterator endpoint_iterator;
-
-    ip::tcp::resolver resolver(_service);
-    auto endpoint_iterator = resolver.resolve({ _serverIP, _port });
-
-    socket_ptr socket(new ip::tcp::socket(_service));
-    _socket = socket;
-
-    async_connect(*_socket, endpoint_iterator, [this](boost::system::error_code ec, ip::tcp::resolver::iterator)
+    _endpoint = ip::tcp::endpoint(ip::address::from_string(_serverIP), _port);
+    _socket = std::make_shared<ip::tcp::socket>(ip::tcp::socket(_service));
+    _socket->async_connect(_endpoint, [this](boost::system::error_code ec)
     {
         if (!ec)
         {
             std::cout << "Connection successfull" << std::endl;
-            _t = std::thread (&client::read, this);
-            _t.join();
+            std::thread readThread(&client::read, this);
+            readInput();
+            readThread.join();
         }
         else
         {
@@ -43,6 +37,8 @@ void client::start()
 void client::read()
 {
     message newMessage;
+    std::cout << "Waiting for messages..." << std::endl;
+
     async_read(*_socket, buffer(newMessage.getBody(), newMessage.getLen()), [this, newMessage](boost::system::error_code ec, std::size_t length)
     {
         if (!ec || ec == boost::asio::error::eof)
@@ -59,19 +55,25 @@ void client::read()
 
 void client::write(const std::string data, int len)
 {
+    std::cout << "Sending message: " << data << std::endl;
     async_write(*_socket, buffer(data, len), [this, data](boost::system::error_code ec, std::size_t length)
     {
         if (!ec)
         {
+            std::cout << "Message was sent successfully" << std::endl;
+        }
+        else
+        {
+            std::cout << "Error happened during message transfer: code " << ec.message() << std::endl;
         }
     });
 }
 
 void client::readInput()
 {
-    std::cout << "123";
     std::string command;
     std::cin >> command;
+    std::cout << "Command was: " << command << std::endl;
     while (true)
     {
         processInput(command);
@@ -83,7 +85,7 @@ void client::processInput(std::string command)
 {
     if (command == "/quit")
     {
-        //_t.join();
+        std::cout << "disconnecting..." << std::endl;
         _socket->close();
         exit(0);
     }
