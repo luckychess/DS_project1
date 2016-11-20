@@ -91,20 +91,21 @@ void server::processCommand(std::string command)
 
 void server::read(participant p)
 {
-    message newMessage;
+    std::shared_ptr<message> newMessage = std::make_shared<message>();
+
     std::cout << "Reading message of client " << p.getId() << std::endl;
-    async_read(*p.getSocket(), buffer(newMessage.getBody(), newMessage.getLen()), [this, newMessage, p](boost::system::error_code ec, std::size_t length)
+    async_read(*p.getSocket(), buffer(newMessage->getBody(), newMessage->getLen()), [this, newMessage, p](boost::system::error_code ec, std::size_t length)
     {
         if (!ec || ec == boost::asio::error::eof)
         {
             std::cout << "Client " << p.getId() << " sent ";
-            std::cout << newMessage.getBody() << std::endl;
+            std::cout << newMessage->getBody() << std::endl;
             for (int i = 0; i < _participants.size(); ++i)
             {
                 std::string c;
                 c += std::to_string(p.getId());
                 c += " ";
-                c += newMessage.getBody();
+                c += newMessage->getBody();
                 if (i != p.getId())
                 {
                     write(_participants.at(i), c.c_str(), length);
