@@ -18,6 +18,7 @@ private:
     io_service                      _service;
     ip::tcp::endpoint               _endpoint;
     socket_ptr                      _socket;
+    boost::asio::streambuf          _readbuf;
 
     void start();
     void read();

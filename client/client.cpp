@@ -36,15 +36,20 @@ void client::start()
 
 void client::read()
 {
-    message newMessage;
     std::cout << "Waiting for messages..." << std::endl;
 
-    async_read(*_socket, buffer(newMessage.getBody(), newMessage.getLen()), [this, newMessage](boost::system::error_code ec, std::size_t length)
+    async_read_until(*_socket, _readbuf, '\n', [this](boost::system::error_code ec, std::size_t bytes_transferred)
     {
-        if (!ec || ec == boost::asio::error::eof)
+        if (!ec)
         {
-            std::cout << "Got message: ";
-            std::cout << newMessage.getBody() << std::endl;
+            std::cout << "Got message of " << bytes_transferred << "bytes: ";
+
+            std::istream is(&_readbuf);
+            std::string s;
+            is >> s;
+            is >> s;                   // clean input buffer
+
+            std::cout << s << std::endl;
         }
         else
         {
@@ -55,8 +60,11 @@ void client::read()
 
 void client::write(const std::string data, int len)
 {
+    std::string dataToSend = data + '\n';
+    ++len;
+
     std::cout << "Sending message: " << data << ", " << len << " bytes" << std::endl;
-    async_write(*_socket, buffer(data, len), [this, data](boost::system::error_code ec, std::size_t length)
+    async_write(*_socket, buffer(dataToSend, len), [this](boost::system::error_code ec, std::size_t length)
     {
         if (!ec)
         {

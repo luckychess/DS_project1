@@ -92,41 +92,51 @@ void server::processCommand(std::string command)
 void server::read(participant p)
 {
     std::shared_ptr<message> newMessage = std::make_shared<message>();
-
     std::cout << "Reading message of client " << p.getId() << std::endl;
-    async_read(*p.getSocket(), buffer(newMessage->getBody(), newMessage->getLen()), [this, newMessage, p](boost::system::error_code ec, std::size_t length)
+
+    async_read_until(*p.getSocket(), _readbuf, '\n', [this, newMessage, p](boost::system::error_code ec, std::size_t bytes_transferred)
     {
-        if (!ec || ec == boost::asio::error::eof)
+        if (!ec)
         {
-            std::cout << "Client " << p.getId() << " sent ";
-            std::cout << newMessage->getBody() << std::endl;
+            std::cout << "Client " << p.getId() << " sent " << bytes_transferred << " bytes: ";
+
+            std::istream is(&_readbuf);
+            std::string s;
+            is >> s;
+
+            std::cout << s << std::endl;
             for (int i = 0; i < _participants.size(); ++i)
             {
-                std::string c;
-                c += std::to_string(p.getId());
-                c += " ";
-                c += newMessage->getBody();
                 if (i != p.getId())
                 {
-                    write(_participants.at(i), c.c_str(), length);
+                    write(_participants.at(i), s.c_str(), bytes_transferred);
                 }
             }
+
+            is >> s;        // clean input buffer
+            read(p);
         }
         else
         {
             std::cout << "Error happened while reading: client " << p.getId() << ", code " << ec.message() << std::endl;
+            p.getSocket()->close();
+            _participants.erase(p.getId());
+            --_lastParticipant;
         }
     });
 }
 
 void server::write(participant p, const std::string data, int len)
 {
+    std::string dataToSend = data + '\n';
+    ++len;
+
     std::cout << "Sending message to client " << p.getId() << ": " << data << ", " << len << " bytes" << std::endl;
-    async_write(*p.getSocket(), buffer(data, len), [this, data, p](boost::system::error_code ec, std::size_t length)
+    async_write(*p.getSocket(), buffer(dataToSend, len), [this, data, p](boost::system::error_code ec, std::size_t length)
     {
         if (!ec)
         {
-            std::cout << "message was sent to client " << p.getId() << ": "<< data;
+            std::cout << "message was sent to client " << p.getId() << ": "<< data << std::endl;
         }
         else
         {

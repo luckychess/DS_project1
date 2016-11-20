@@ -22,6 +22,7 @@ private:
     ip::tcp::acceptor               _acceptor;
     std::map<int, participant>      _participants;
     int                             _lastParticipant;
+    boost::asio::streambuf          _readbuf;
 
     void readCommands();
     void processCommand(std::string command);
