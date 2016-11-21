@@ -1,7 +1,6 @@
 #include "server.h"
 #include "../service/message.h"
 #include <iostream>
-#include <thread>
 
 using namespace std::placeholders;
 
@@ -36,10 +35,9 @@ server::server(int port):
 
 void server::start()
 {
-    std::thread t (&server::readCommands, this);
     startAccept();
     _service.run();
-    t.join();
+    readCommands();
 }
 
 void server::readCommands()

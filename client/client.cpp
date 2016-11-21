@@ -2,7 +2,6 @@
 #include "../service/message.h"
 #include <iostream>
 #include <sstream>
-#include <thread>
 
 client::client(char *ip, char *port)
 {
@@ -22,9 +21,8 @@ void client::start()
         if (!ec)
         {
             std::cout << "Connection successfull" << std::endl;
-            std::thread readThread(&client::read, this);
+            read();
             readInput();
-            readThread.join();
         }
         else
         {
@@ -50,6 +48,7 @@ void client::read()
             is >> s;                   // clean input buffer
 
             std::cout << s << std::endl;
+            read();
         }
         else
         {
