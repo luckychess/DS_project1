@@ -26,8 +26,8 @@ private:
 
     void readCommands();
     void processCommand(std::string command);
-    void read(participant p);
-    void write(participant p, const std::string data, int len);
+    void read(int participantId);
+    void write(int participantId, const std::string data, int len);
 };
 
 #endif // _SERVER_H_

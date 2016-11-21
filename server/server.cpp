@@ -16,12 +16,12 @@ void server::startAccept()
             participant p("unknown", newSocket, _lastParticipant);
             _participants.insert(std::pair<int, participant>(_lastParticipant++, p));
             std::cout << "Connection established for client " << _lastParticipant-1 << std::endl;
-            read(p);
+            read(p.getId());
             startAccept();
         }
         else
         {
-            std::cout << "Error happened: client " << _lastParticipant << ", code " << ec << std::endl;
+            std::cout << "A new client tried to connect but error happened: code " << ec << std::endl;
         }
     });
 }
@@ -89,58 +89,67 @@ void server::processCommand(std::string command)
     }
 }
 
-void server::read(participant p)
+void server::read(int participantId)
 {
     std::shared_ptr<message> newMessage = std::make_shared<message>();
-    std::cout << "Reading message of client " << p.getId() << std::endl;
 
-    async_read_until(*p.getSocket(), _readbuf, '\n', [this, newMessage, p](boost::system::error_code ec, std::size_t bytes_transferred)
+    async_read_until(*_participants.at(participantId).getSocket(), _readbuf, '\n',
+        [this, newMessage, participantId](boost::system::error_code ec, std::size_t bytes_transferred)
     {
         if (!ec)
         {
-            std::cout << "Client " << p.getId() << " sent " << bytes_transferred << " bytes: ";
+            std::cout << "Client " << _participants.at(participantId).getName() << " sent " << bytes_transferred << " bytes: ";
 
             std::istream is(&_readbuf);
             std::string s;
             is >> s;
-
             std::cout << s << std::endl;
-            for (int i = 0; i < _participants.size(); ++i)
+
+            if (_participants.at(participantId).getFirstMessageFlag())
             {
-                if (i != p.getId())
+                _participants.at(participantId).setName(s);
+                _participants.at(participantId).cleanFirstMessageFlag();
+            }
+
+            else
+            {
+                for (int i = 0; i < _participants.size(); ++i)
                 {
-                    write(_participants.at(i), s.c_str(), bytes_transferred);
+                    if (i != participantId)
+                    {
+                        write(i, s.c_str(), bytes_transferred);
+                    }
                 }
             }
 
             is >> s;        // clean input buffer
-            read(p);
+            read(participantId);
         }
         else
         {
-            std::cout << "Error happened while reading: client " << p.getId() << ", code " << ec.message() << std::endl;
-            p.getSocket()->close();
-            _participants.erase(p.getId());
+            std::cout << "Error happened while reading: client " << _participants.at(participantId).getName() << ", code " << ec.message() << std::endl;
+            _participants.at(participantId).getSocket()->close();
+            _participants.erase(participantId);
             --_lastParticipant;
         }
     });
 }
 
-void server::write(participant p, const std::string data, int len)
+void server::write(int participantId, const std::string data, int len)
 {
     std::string dataToSend = data + '\n';
     ++len;
 
-    std::cout << "Sending message to client " << p.getId() << ": " << data << ", " << len << " bytes" << std::endl;
-    async_write(*p.getSocket(), buffer(dataToSend, len), [this, data, p](boost::system::error_code ec, std::size_t length)
+    async_write(*_participants.at(participantId).getSocket(), buffer(dataToSend, len),
+        [this, data, participantId](boost::system::error_code ec, std::size_t length)
     {
         if (!ec)
         {
-            std::cout << "message was sent to client " << p.getId() << ": "<< data << std::endl;
+            std::cout << "message was sent to client " << _participants.at(participantId).getName() << ": "<< data << std::endl;
         }
         else
         {
-            std::cout << "Error happened while writing: client " << p.getId() << ", code " << ec.message() << std::endl;
+            std::cout << "Error happened while writing: client " << _participants.at(participantId).getName() << ", code " << ec.message() << std::endl;
         }
     });
 }

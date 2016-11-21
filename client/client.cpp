@@ -4,7 +4,8 @@
 #include <sstream>
 #include <thread>
 
-client::client(char *ip, char *port)
+client::client(char *ip, char *port, char *name):
+    _name(name)
 {
     _serverIP = ip;
     std::stringstream portValue;
@@ -17,7 +18,6 @@ client::client(char *ip, char *port)
     startConnect();
     _service.run();
     t.join();
-    //readCommands();
 }
 
 void client::startConnect()
@@ -27,8 +27,7 @@ void client::startConnect()
         if (!ec)
         {
             std::cout << "Connection successfull" << std::endl;
-            std::string hello = "Hello!";
-            write(hello, hello.size());
+            write(_name, _name.size());
             read();
         }
         else
@@ -110,12 +109,12 @@ void client::processInput(std::string command)
 
 int main(int argc, char **argv)
 {
-    if (argc != 3)
+    if (argc != 4)
     {
-        std::cout << "Usage: client <ip> <port>" << std::endl;
+        std::cout << "Usage: client <ip> <port> <your_name>" << std::endl;
         return 0;
     }
-    client newClient(argv[1], argv[2]);
+    client newClient(argv[1], argv[2], argv[3]);
 
     return 0;
 }

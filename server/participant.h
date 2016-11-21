@@ -18,11 +18,16 @@ public:
     socket_ptr getSocket() const;
     std::string getName() const;
     int getId() const;
+    bool getFirstMessageFlag() const;
+
+    void cleanFirstMessageFlag();
+    void setName(std::string name);
 
 private:
     socket_ptr        _socket;
     std::string       _name;
     int               _id;
+    bool              _firstMessageFlag;
 };
 
 #endif // _PARTICIPANT_H_

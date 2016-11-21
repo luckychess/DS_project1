@@ -11,7 +11,7 @@ typedef std::shared_ptr<ip::tcp::socket> socket_ptr;
 class client
 {
 public:
-    client(char *ip, char *port);
+    client(char *ip, char *port, char *name);
 private:
     char                           *_serverIP;
     int                             _port;
@@ -19,6 +19,7 @@ private:
     ip::tcp::endpoint               _endpoint;
     socket_ptr                      _socket;
     boost::asio::streambuf          _readbuf;
+    std::string                     _name;
 
     void startConnect();
     void read();
