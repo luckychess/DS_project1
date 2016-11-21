@@ -39,14 +39,10 @@ void client::startConnect()
 
 void client::read()
 {
-    std::cout << "Waiting for messages..." << std::endl;
-
     async_read_until(*_socket, _readbuf, '\n', [this](boost::system::error_code ec, std::size_t bytes_transferred)
     {
         if (!ec)
         {
-            std::cout << "Got message of " << bytes_transferred << " bytes: ";
-
             std::istream is(&_readbuf);
             std::string s;
             is >> s;
@@ -67,7 +63,6 @@ void client::write(const std::string data, int len)
     std::string dataToSend = data + '\n';
     ++len;
 
-    std::cout << "Sending message: " << data << ", " << len << " bytes" << std::endl;
     async_write(*_socket, buffer(dataToSend, len), [this](boost::system::error_code ec, std::size_t length)
     {
         if (!ec)
@@ -84,12 +79,11 @@ void client::write(const std::string data, int len)
 void client::readCommands()
 {
     std::string command;
-    std::cin >> command;
-    std::cout << "Command was: " << command << std::endl;
+    std::getline(std::cin, command);
     while (true)
     {
         processInput(command);
-        std::cin >> command;
+        std::getline(std::cin, command);
     }
 }
 

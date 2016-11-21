@@ -58,11 +58,11 @@ void server::start()
 void server::readCommands()
 {
     std::string command;
-    std::cin >> command;
+    std::getline(std::cin, command);
     while (true)
     {
         processCommand(command);
-        std::cin >> command;
+        std::getline(std::cin, command);
     }
 }
 
@@ -137,11 +137,12 @@ void server::read(int participantId)
 
             else
             {
+                s.insert(0, _participants.at(participantId).getName() + "-->");
                 for (int i = 0; i < _participants.size(); ++i)
                 {
                     if (i != participantId)
                     {
-                        write(i, s.c_str(), bytes_transferred);
+                        write(i, s, s.size());
                     }
                 }
             }
@@ -162,6 +163,8 @@ void server::write(int participantId, const std::string data, int len)
 {
     std::string dataToSend = data + '\n';
     ++len;
+
+    std::cout << dataToSend << std::endl;
 
     async_write(*_participants.at(participantId).getSocket(), buffer(dataToSend, len),
         [this, data, participantId](boost::system::error_code ec, std::size_t length)
