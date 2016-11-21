@@ -20,10 +20,10 @@ private:
     socket_ptr                      _socket;
     boost::asio::streambuf          _readbuf;
 
-    void start();
+    void startConnect();
     void read();
     void write(const std::string data, int len);
-    void readInput();
+    void readCommands();
     void processInput(std::string command);
 };
 

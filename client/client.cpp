@@ -2,6 +2,7 @@
 #include "../service/message.h"
 #include <iostream>
 #include <sstream>
+#include <thread>
 
 client::client(char *ip, char *port)
 {
@@ -9,27 +10,32 @@ client::client(char *ip, char *port)
     std::stringstream portValue;
     portValue << port;
     portValue >> _port;
-    start();
-}
-
-void client::start()
-{
     _endpoint = ip::tcp::endpoint(ip::address::from_string(_serverIP), _port);
     _socket = std::make_shared<ip::tcp::socket>(ip::tcp::socket(_service));
+
+    std::thread t (&client::readCommands, this);
+    startConnect();
+    _service.run();
+    t.join();
+    //readCommands();
+}
+
+void client::startConnect()
+{
     _socket->async_connect(_endpoint, [this](boost::system::error_code ec)
     {
         if (!ec)
         {
             std::cout << "Connection successfull" << std::endl;
+            std::string hello = "Hello!";
+            write(hello, hello.size());
             read();
-            readInput();
         }
         else
         {
             std::cout << "Connection unsuccessfull" << std::endl;
         }
     });
-    _service.run();
 }
 
 void client::read()
@@ -40,7 +46,7 @@ void client::read()
     {
         if (!ec)
         {
-            std::cout << "Got message of " << bytes_transferred << "bytes: ";
+            std::cout << "Got message of " << bytes_transferred << " bytes: ";
 
             std::istream is(&_readbuf);
             std::string s;
@@ -76,7 +82,7 @@ void client::write(const std::string data, int len)
     });
 }
 
-void client::readInput()
+void client::readCommands()
 {
     std::string command;
     std::cin >> command;
