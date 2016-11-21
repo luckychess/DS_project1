@@ -5,6 +5,17 @@
 
 using namespace std::placeholders;
 
+void server::printHelp()
+{
+    std::cout << "Hello to the Simple Chat server!" << std::endl;
+    std::cout << "Server runs on a port " << _port << "." << std::endl;
+    std::cout << "Commands list:" << std::endl;
+    std::cout << "/help - prints this help." << std::endl;
+    std::cout << "/show - shows all cliens connected." << std::endl;
+    std::cout << "/kick - kick the user with given id (asks after)." << std::endl;
+    std::cout << "/quit - shutdown the server." << std::endl;
+}
+
 void server::startAccept()
 {
     socket_ptr newSocket(new ip::tcp::socket(_service));
@@ -13,9 +24,10 @@ void server::startAccept()
     {
         if (!ec)
         {
-            participant p("unknown", newSocket, _lastParticipant);
-            _participants.insert(std::pair<int, participant>(_lastParticipant++, p));
-            std::cout << "Connection established for client " << _lastParticipant-1 << std::endl;
+            participant p("unknown", newSocket, _totalClients);
+            _participants.insert(std::pair<int, participant>(_totalClients, p));
+            std::cout << "Connection established for client " << _totalClients << std::endl;
+            ++_totalClients;
             read(p.getId());
             startAccept();
         }
@@ -30,12 +42,13 @@ server::server(int port):
     _port(port),
     _endpoint(ip::tcp::v4(), _port),
     _acceptor(_service, _endpoint),
-    _lastParticipant(0)
+    _totalClients(0)
 {
 }
 
 void server::start()
 {
+    printHelp();
     std::thread t (&server::readCommands, this);
     startAccept();
     _service.run();
@@ -55,17 +68,17 @@ void server::readCommands()
 
 void server::processCommand(std::string command)
 {
-    std::cout << "command was " << command << std::endl;
     if (command == "/kick")
     {
         std::cout << "enter user id to kick: " << std::endl;
         int id = -1;
         std::cin >> id;
-        std::cout << "id entered: " << id << std::endl;
         if (_participants.count(id) > 0)
         {
+            std::cout << _participants.at(id).getName() << " kicked." << std::endl;
+            boost::system::error_code ec;
+            _participants.at(id).getSocket()->shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
             _participants.at(id).getSocket()->close();
-            _participants.erase(id);
         }
         else
         {
@@ -74,18 +87,28 @@ void server::processCommand(std::string command)
     }
     else if (command == "/show")
     {
-        for (int i = 0; i < _participants.size(); ++i)
+        for(auto iterator = _participants.begin(); iterator != _participants.end(); iterator++)
         {
-            std::cout << _participants.at(i).getId() << "  " << _participants.at(i).getName() << std::endl;
+            std::cout << iterator->second.getId() << "  " << iterator->second.getName() << std::endl;
         }
+    }
+    else if (command == "/help")
+    {
+        printHelp();
     }
     else if (command == "/quit")
     {
         for (int i = 0; i < _participants.size(); ++i)
         {
+            boost::system::error_code ec;
+            _participants.at(i).getSocket()->shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
             _participants.at(i).getSocket()->close();
         }
         exit(0);
+    }
+    else
+    {
+        std::cout << "Unknown command. Type /help to get a full command list." << std::endl;
     }
 }
 
@@ -109,6 +132,7 @@ void server::read(int participantId)
             {
                 _participants.at(participantId).setName(s);
                 _participants.at(participantId).cleanFirstMessageFlag();
+                std::cout << "Client " << participantId << " is now known as " << s << std:: endl;
             }
 
             else
@@ -130,7 +154,6 @@ void server::read(int participantId)
             std::cout << "Error happened while reading: client " << _participants.at(participantId).getName() << ", code " << ec.message() << std::endl;
             _participants.at(participantId).getSocket()->close();
             _participants.erase(participantId);
-            --_lastParticipant;
         }
     });
 }
@@ -145,7 +168,7 @@ void server::write(int participantId, const std::string data, int len)
     {
         if (!ec)
         {
-            std::cout << "message was sent to client " << _participants.at(participantId).getName() << ": "<< data << std::endl;
+            std::cout << "Message was sent to client " << _participants.at(participantId).getName() << ": "<< data << std::endl;
         }
         else
         {

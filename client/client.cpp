@@ -98,6 +98,8 @@ void client::processInput(std::string command)
     if (command == "/quit")
     {
         std::cout << "disconnecting..." << std::endl;
+        boost::system::error_code ec;
+        _socket->shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
         _socket->close();
         exit(0);
     }
